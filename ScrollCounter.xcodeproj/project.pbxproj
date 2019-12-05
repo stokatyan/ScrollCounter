@@ -8,12 +8,16 @@
 
 /* Begin PBXBuildFile section */
 		E1E4C7332398A7660043A9A1 /* ScrollCounter.h in Headers */ = {isa = PBXBuildFile; fileRef = E1E4C7312398A7660043A9A1 /* ScrollCounter.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		E1E4C7812398ABD40043A9A1 /* ScrollableCounter.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1E4C7802398ABD40043A9A1 /* ScrollableCounter.swift */; };
+		E1E4C7832398BA270043A9A1 /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1E4C7822398BA270043A9A1 /* Extensions.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		E1E4C72E2398A7660043A9A1 /* ScrollCounter.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = ScrollCounter.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		E1E4C7312398A7660043A9A1 /* ScrollCounter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ScrollCounter.h; sourceTree = "<group>"; };
 		E1E4C7322398A7660043A9A1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		E1E4C7802398ABD40043A9A1 /* ScrollableCounter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScrollableCounter.swift; sourceTree = "<group>"; };
+		E1E4C7822398BA270043A9A1 /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -47,6 +51,8 @@
 			isa = PBXGroup;
 			children = (
 				E1E4C7312398A7660043A9A1 /* ScrollCounter.h */,
+				E1E4C7802398ABD40043A9A1 /* ScrollableCounter.swift */,
+				E1E4C7822398BA270043A9A1 /* Extensions.swift */,
 				E1E4C7322398A7660043A9A1 /* Info.plist */,
 			);
 			path = ScrollCounter;
@@ -95,6 +101,7 @@
 				TargetAttributes = {
 					E1E4C72D2398A7660043A9A1 = {
 						CreatedOnToolsVersion = 11.2.1;
+						LastSwiftMigration = 1120;
 					};
 				};
 			};
@@ -131,6 +138,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E1E4C7812398ABD40043A9A1 /* ScrollableCounter.swift in Sources */,
+				E1E4C7832398BA270043A9A1 /* Extensions.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -260,6 +269,7 @@
 		E1E4C7372398A7660043A9A1 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				DEFINES_MODULE = YES;
 				DEVELOPMENT_TEAM = MXMFDT37J7;
@@ -276,6 +286,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = stokaty.ScrollCounter.ScrollCounter;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -284,6 +295,7 @@
 		E1E4C7382398A7660043A9A1 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				DEFINES_MODULE = YES;
 				DEVELOPMENT_TEAM = MXMFDT37J7;
