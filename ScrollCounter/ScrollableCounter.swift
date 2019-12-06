@@ -17,29 +17,25 @@ public class ScrollableCounter: UIView {
         case fromBottom
     }
     
-    // MARK: Properties
+    // MARK: - Properties
     
     let items: [UIView]
     private var currentIndex = 0
-    private var currentItem: UIView? {
-        if currentIndex < items.count {
-            return items[currentIndex]
-        }
-        return nil
+    private var currentItem: UIView {
+        return items[currentIndex]
     }
     
-    let scrollDuration: TimeInterval = 1
+    public var scrollDuration: TimeInterval = 0.75
+        
+    private var animator: UIViewPropertyAnimator?
     
-    // MARK: Init
+    // MARK: - Init
     
     public init(items: [UIView], frame: CGRect = CGRect.zero) {
+        assert(items.count > 0, "ScrollableCounter must be initialized with non empty array of items.")
         self.items = items
         super.init(frame: frame)
         clipsToBounds = true
-        
-        guard let currentItem = currentItem else {
-            return
-        }
         
         addSubview(currentItem)
         currentItem.frame.origin = CGPoint.zero
@@ -49,37 +45,52 @@ public class ScrollableCounter: UIView {
         fatalError("init(coder:) has not been implemented")
     }
     
-    // MARK: Setup
+    // MARK: - Scrolling
     
     public func showNextItem(completion: (() -> Void)?) {
-        if let currentItem = currentItem {
-            currentItem.move(to: CGPoint(x: 0, y: -currentItem.frame.height),
-                             duration: scrollDuration,
-                             options: .curveLinear) {}
+        
+        let progress = TimeInterval((abs(currentItem.top) - currentItem.frame.height)/currentItem.frame.height)
+        let duration: TimeInterval =  abs(progress) * scrollDuration
+        let animator = UIViewPropertyAnimator(duration: duration, curve: .linear, animations: nil)
+        
+        animator.addAnimations {
+            self.currentItem.frame.origin = CGPoint(x: 0, y: -self.currentItem.frame.height)
         }
         
         let nextItemIndex = (currentIndex + 1) % items.count
         let nextItem = items[nextItemIndex]
-        nextItem.frame.origin = CGPoint(x: 0, y: frame.height)
+        nextItem.frame.origin = CGPoint(x: 0, y: currentItem.bottom)
         addSubview(nextItem)
-        nextItem.move(to: CGPoint.zero,
-                      duration: scrollDuration,
-                      options: .curveLinear)
-        {
+        animator.addAnimations {
+            nextItem.frame.origin = CGPoint.zero
+        }
+        
+        animator.addCompletion { position in
             if let completion = completion {
                 self.currentIndex = nextItemIndex
                 completion()
             }
         }
+        
+        animator.startAnimation()
+        self.animator = animator
     }
     
     public func scrollNext(nTimes: Int) {
         guard nTimes > 0 else {
             return
         }
+        
         showNextItem {
             self.scrollNext(nTimes: nTimes - 1)
         }
     }
+    
+    public func stop() {
+        if let animator = animator {
+            animator.stopAnimation(true)
+        }
+    }
+    
     
 }

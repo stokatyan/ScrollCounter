@@ -7,17 +7,17 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		E14426412399FBCE0038301E /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = E14426402399FBCE0038301E /* Extensions.swift */; };
 		E1E4C7332398A7660043A9A1 /* ScrollCounter.h in Headers */ = {isa = PBXBuildFile; fileRef = E1E4C7312398A7660043A9A1 /* ScrollCounter.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		E1E4C7812398ABD40043A9A1 /* ScrollableCounter.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1E4C7802398ABD40043A9A1 /* ScrollableCounter.swift */; };
-		E1E4C7832398BA270043A9A1 /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1E4C7822398BA270043A9A1 /* Extensions.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		E14426402399FBCE0038301E /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
 		E1E4C72E2398A7660043A9A1 /* ScrollCounter.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = ScrollCounter.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		E1E4C7312398A7660043A9A1 /* ScrollCounter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ScrollCounter.h; sourceTree = "<group>"; };
 		E1E4C7322398A7660043A9A1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		E1E4C7802398ABD40043A9A1 /* ScrollableCounter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScrollableCounter.swift; sourceTree = "<group>"; };
-		E1E4C7822398BA270043A9A1 /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -52,7 +52,7 @@
 			children = (
 				E1E4C7312398A7660043A9A1 /* ScrollCounter.h */,
 				E1E4C7802398ABD40043A9A1 /* ScrollableCounter.swift */,
-				E1E4C7822398BA270043A9A1 /* Extensions.swift */,
+				E14426402399FBCE0038301E /* Extensions.swift */,
 				E1E4C7322398A7660043A9A1 /* Info.plist */,
 			);
 			path = ScrollCounter;
@@ -139,7 +139,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				E1E4C7812398ABD40043A9A1 /* ScrollableCounter.swift in Sources */,
-				E1E4C7832398BA270043A9A1 /* Extensions.swift in Sources */,
+				E14426412399FBCE0038301E /* Extensions.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
