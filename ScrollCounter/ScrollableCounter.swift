@@ -13,8 +13,8 @@ import UIKit
 public class ScrollableCounter: UIView {
     
     public enum ScrollDirection {
-        case fromTop
-        case fromBottom
+        case down
+        case up
     }
     
     // MARK: - Properties
@@ -47,22 +47,38 @@ public class ScrollableCounter: UIView {
     
     // MARK: - Scrolling
     
-    public func showNextItem(completion: (() -> Void)?) {
+    private func showNextItem(_ direction: ScrollDirection, completion: (() -> Void)?) {
         
-        let progress = TimeInterval((abs(currentItem.top) - currentItem.frame.height)/currentItem.frame.height)
+        let currentItemStartY = currentItem.top
+        var currentItemEndY = -currentItem.frame.height
+        var nextItemStartPoint = CGPoint(x: 0, y: currentItem.bottom)
+        let nextItemEndPoint = CGPoint.zero
+        var nextItemShift = -1
+        
+        if direction == .down {
+            currentItemEndY = currentItem.frame.height
+            nextItemStartPoint = CGPoint(x: 0, y: currentItem.top - currentItem.frame.height)
+            nextItemShift = 1
+        }
+        
+        let progress = TimeInterval((abs(currentItemStartY) - abs(currentItemEndY))/currentItemEndY)
         let duration: TimeInterval =  abs(progress) * scrollDuration
         let animator = UIViewPropertyAnimator(duration: duration, curve: .linear, animations: nil)
         
         animator.addAnimations {
-            self.currentItem.frame.origin = CGPoint(x: 0, y: -self.currentItem.frame.height)
+            self.currentItem.frame.origin = CGPoint(x: 0, y: currentItemEndY)
         }
         
-        let nextItemIndex = (currentIndex + 1) % items.count
+        var nextItemIndex = (currentIndex + nextItemShift) % items.count
+        if nextItemIndex < 0 {
+            nextItemIndex = items.count - 1
+        }
+        
         let nextItem = items[nextItemIndex]
-        nextItem.frame.origin = CGPoint(x: 0, y: currentItem.bottom)
+        nextItem.frame.origin = nextItemStartPoint
         addSubview(nextItem)
         animator.addAnimations {
-            nextItem.frame.origin = CGPoint.zero
+            nextItem.frame.origin = nextItemEndPoint
         }
         
         animator.addCompletion { position in
@@ -76,13 +92,13 @@ public class ScrollableCounter: UIView {
         self.animator = animator
     }
     
-    public func scrollNext(nTimes: Int) {
+    public func scrollNext(_ direction: ScrollDirection = .up, nTimes: Int) {
         guard nTimes > 0 else {
             return
         }
         
-        showNextItem {
-            self.scrollNext(nTimes: nTimes - 1)
+        showNextItem(direction) {
+            self.scrollNext(direction, nTimes: nTimes - 1)
         }
     }
     
