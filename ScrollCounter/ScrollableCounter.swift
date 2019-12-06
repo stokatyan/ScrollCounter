@@ -25,7 +25,6 @@ public class ScrollableCounter: UIView {
         return items[currentIndex]
     }
     
-    public var scrollDuration: TimeInterval = 0.25
     private var animator: UIViewPropertyAnimator?
     private var latestDirection: ScrollDirection?
     
@@ -47,7 +46,7 @@ public class ScrollableCounter: UIView {
     
     // MARK: - Scrolling
     
-    private func normalize(direction: ScrollDirection, completion: (() -> Void)?) {
+    private func normalize(direction: ScrollDirection, duration: TimeInterval, completion: (() -> Void)?) {
         latestDirection = direction
         
         switch direction {
@@ -60,17 +59,16 @@ public class ScrollableCounter: UIView {
             currentIndex = (currentIndex + 1) % items.count
         }
         
-        showNextItem(direction, completion: completion)
+        showNextItem(direction, duration: duration, completion: completion)
     }
     
-    private func showNextItem(_ direction: ScrollDirection, completion: (() -> Void)?) {
+    private func showNextItem(_ direction: ScrollDirection, duration: TimeInterval, completion: (() -> Void)?) {
         if let latestDirection = latestDirection, latestDirection != direction {
-            normalize(direction: direction, completion: completion)
+            normalize(direction: direction, duration: duration, completion: completion)
             return
         }
         latestDirection = direction
         
-        let currentItemStartY = currentItem.top
         var currentItemEndY = -currentItem.frame.height
         var nextItemStartPoint = CGPoint(x: 0, y: currentItem.bottom)
         let nextItemEndPoint = CGPoint.zero
@@ -82,8 +80,6 @@ public class ScrollableCounter: UIView {
             nextItemShift = 1
         }
         
-        let progress = TimeInterval((abs(currentItemStartY) - abs(currentItemEndY))/currentItemEndY)
-        let duration: TimeInterval =  abs(progress) * scrollDuration
         let animator = UIViewPropertyAnimator(duration: duration, curve: .linear, animations: nil)
         
         animator.addAnimations {
@@ -113,13 +109,21 @@ public class ScrollableCounter: UIView {
         self.animator = animator
     }
     
-    public func scrollNext(_ direction: ScrollDirection = .up, nTimes: Int) {
+    public func scrollNext(_ direction: ScrollDirection = .up, totalDuration duration: TimeInterval, nTimes: Int) {
         guard nTimes > 0 else {
             return
         }
         
-        showNextItem(direction) {
-            self.scrollNext(direction, nTimes: nTimes - 1)
+        self.scrollNext(direction, durationPerItem: duration/TimeInterval(nTimes), nTimes: nTimes)
+    }
+    
+    func scrollNext(_ direction: ScrollDirection = .up, durationPerItem duration: TimeInterval, nTimes: Int) {
+        guard nTimes > 0 else {
+            return
+        }
+        
+        showNextItem(direction, duration: duration) {
+            self.scrollNext(direction, durationPerItem: duration, nTimes: nTimes - 1)
         }
     }
     
