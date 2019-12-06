@@ -25,9 +25,9 @@ public class ScrollableCounter: UIView {
         return items[currentIndex]
     }
     
-    public var scrollDuration: TimeInterval = 0.75
-        
+    public var scrollDuration: TimeInterval = 0.25
     private var animator: UIViewPropertyAnimator?
+    private var latestDirection: ScrollDirection?
     
     // MARK: - Init
     
@@ -47,7 +47,28 @@ public class ScrollableCounter: UIView {
     
     // MARK: - Scrolling
     
+    private func normalize(direction: ScrollDirection, completion: (() -> Void)?) {
+        latestDirection = direction
+        
+        switch direction {
+        case .down:
+            currentIndex -= 1
+            if currentIndex < 0 {
+                currentIndex = items.count - 1
+            }
+        case .up:
+            currentIndex = (currentIndex + 1) % items.count
+        }
+        
+        showNextItem(direction, completion: completion)
+    }
+    
     private func showNextItem(_ direction: ScrollDirection, completion: (() -> Void)?) {
+        if let latestDirection = latestDirection, latestDirection != direction {
+            normalize(direction: direction, completion: completion)
+            return
+        }
+        latestDirection = direction
         
         let currentItemStartY = currentItem.top
         var currentItemEndY = -currentItem.frame.height
