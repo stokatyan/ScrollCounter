@@ -12,7 +12,8 @@ extension UIView {
  
     func move(to destination: CGPoint,
               duration: TimeInterval,
-              options: UIView.AnimationOptions) {
+              options: UIView.AnimationOptions,
+              completion: @escaping () -> Void) {
         
         UIView.animate(withDuration: duration,
                        delay: 0,
@@ -20,7 +21,9 @@ extension UIView {
                        animations:
         {
             self.frame.origin = destination
-        }, completion: nil)
+        }) { finished in
+            completion()
+        }
     }
     
 }

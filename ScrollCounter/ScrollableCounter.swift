@@ -51,11 +51,11 @@ public class ScrollableCounter: UIView {
     
     // MARK: Setup
     
-    public func showNextItem() {
+    public func showNextItem(completion: (() -> Void)?) {
         if let currentItem = currentItem {
             currentItem.move(to: CGPoint(x: 0, y: -currentItem.frame.height),
                              duration: scrollDuration,
-                             options: .curveLinear)
+                             options: .curveLinear) {}
         }
         
         let nextItemIndex = (currentIndex + 1) % items.count
@@ -65,8 +65,21 @@ public class ScrollableCounter: UIView {
         nextItem.move(to: CGPoint.zero,
                       duration: scrollDuration,
                       options: .curveLinear)
-        currentIndex = nextItemIndex
+        {
+            if let completion = completion {
+                self.currentIndex = nextItemIndex
+                completion()
+            }
+        }
     }
     
+    public func scrollNext(nTimes: Int) {
+        guard nTimes > 0 else {
+            return
+        }
+        showNextItem {
+            self.scrollNext(nTimes: nTimes - 1)
+        }
+    }
     
 }
