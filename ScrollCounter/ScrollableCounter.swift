@@ -60,10 +60,14 @@ public class ScrollableCounter: UIView {
         }
         
         showNextItem(direction, duration: duration, completion: completion)
+        
+//        showNextItem(direction, duration: duration) {
+//            self.showNextItem(direction, duration: duration, completion: completion)
+//        }
     }
     
     private func showNextItem(_ direction: ScrollDirection, duration: TimeInterval, completion: (() -> Void)?) {
-        if let latestDirection = latestDirection, latestDirection != direction {
+        if let latestDirection = latestDirection, latestDirection != direction, currentItem.frame.origin != CGPoint.zero {
             normalize(direction: direction, duration: duration, completion: completion)
             return
         }
