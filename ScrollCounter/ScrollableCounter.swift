@@ -109,7 +109,31 @@ public class ScrollableCounter: UIView {
         self.animator = animator
     }
     
-    public func scrollNext(_ direction: ScrollDirection = .up, totalDuration duration: TimeInterval, nTimes: Int) {
+    public func scrollToItem(atIndex index: Int, direction: ScrollDirection, totalDuration duration: TimeInterval) {
+        guard index != currentIndex else {
+            return
+        }
+        var nTimes: Int = 0
+        
+        switch direction {
+        case .down:
+            if index > currentIndex {
+                nTimes = index - currentIndex
+            } else {
+                nTimes = items.count - currentIndex + index
+            }
+        case .up:
+            if index < currentIndex {
+                nTimes = currentIndex - index
+            } else {
+                nTimes = items.count + currentIndex - index
+            }
+        }
+        
+        scrollNext(direction, totalDuration: duration, nTimes: nTimes)
+    }
+    
+    public func scrollNext(_ direction: ScrollDirection, totalDuration duration: TimeInterval, nTimes: Int) {
         guard nTimes > 0 else {
             return
         }
@@ -117,7 +141,7 @@ public class ScrollableCounter: UIView {
         self.scrollNext(direction, durationPerItem: duration/TimeInterval(nTimes), nTimes: nTimes)
     }
     
-    func scrollNext(_ direction: ScrollDirection = .up, durationPerItem duration: TimeInterval, nTimes: Int) {
+    func scrollNext(_ direction: ScrollDirection, durationPerItem duration: TimeInterval, nTimes: Int) {
         guard nTimes > 0 else {
             return
         }
