@@ -64,7 +64,7 @@ public class ScrollableCounter: UIView {
         - items: An ordered list of the views that will be scrolled.
         - frame: The frame of the `ScrollableCounter`, and the frame of every item.
      */
-    public init(items: [UIView], frame: CGRect = CGRect.zero) {
+    init(items: [UIView], frame: CGRect = CGRect.zero) {
         assert(items.count > 0, "ScrollableCounter must be initialized with non empty array of items.")
         for item in items {
             assert(item.frame.equalTo(frame), "The frame of each item should equal the frame of the ScrollableCounter")
