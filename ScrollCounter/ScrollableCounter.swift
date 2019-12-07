@@ -29,14 +29,17 @@ public class ScrollableCounter: UIView {
     // MARK: - Properties
     
     let items: [UIView]
+    
     private var currentIndex = 0
     private var currentItem: UIView {
         return items[currentIndex]
     }
     
+    var itemsBeingAnimated = [UIView]()
+    
     private var animator: UIViewPropertyAnimator?
     private var latestDirection: ScrollDirection?
-    var totalDuration: TimeInterval = 1
+    var totalDuration: TimeInterval = 0.25
     
     // MARK: - Init
     
@@ -48,6 +51,10 @@ public class ScrollableCounter: UIView {
         
         addSubview(currentItem)
         currentItem.frame.origin = CGPoint.zero
+        
+        for (tag, item) in items.enumerated() {
+            item.tag = tag
+        }
     }
     
     required init?(coder: NSCoder) {
@@ -56,45 +63,38 @@ public class ScrollableCounter: UIView {
     
     // MARK: - Scrolling
     
-    private func normalize(direction: ScrollDirection, duration: TimeInterval, completion: (() -> Void)?) {
-        latestDirection = direction
-        
-        switch direction {
-        case .down:
-            currentIndex -= 1
-            if currentIndex < 0 {
-                currentIndex = items.count - 1
-            }
-        case .up:
-            currentIndex = (currentIndex + 1) % items.count
-        }
-        
-//        showNextItem(direction, duration: duration) {
-//            self.showNextItem(direction, duration: duration, completion: completion)
-//        }
-    }
-    
     private func animateToItem(atIndex index: Int, direction: ScrollDirection) {
+        resetCurrentIndex(direction: direction)
         let animator = UIViewPropertyAnimator(duration: totalDuration, curve: .linear, animations: nil)
-        
-        var itemsToAnimate = [UIView]()
-        
+                
+        var offset: CGFloat = 0
         var itemIndex = currentIndex
         var distance = 0
         var continueBuilding = true
         while continueBuilding {
             let item = items[itemIndex]
-            if distance != 0 {
-                addSubview(item)
-                switch direction {
-                case .down:
-                    item.frame.origin = CGPoint(x: 0, y: frame.height * CGFloat(distance) * -1)
-                case .up:
-                    item.frame.origin = CGPoint(x: 0, y: frame.height * CGFloat(distance))
+            let isAlreadyBeingAnimated = itemsBeingAnimated.contains(item)
+            if isAlreadyBeingAnimated {
+                if distance == 0 {
+                    offset = item.frame.origin.y
                 }
+            } else {
+                addSubview(item)
             }
-            itemsToAnimate.append(item)
-                        
+            
+            switch direction {
+            case .down:
+                item.frame.origin = CGPoint(x: 0, y: frame.height * CGFloat(distance) * -1)
+            case .up:
+                item.frame.origin = CGPoint(x: 0, y: frame.height * CGFloat(distance))
+            }
+            item.frame.origin.y += offset
+            
+            if !isAlreadyBeingAnimated {
+                itemsBeingAnimated.append(item)
+            }
+            
+            // prepare next iteration
             if itemIndex == index {
                 continueBuilding = false
             }
@@ -105,8 +105,8 @@ public class ScrollableCounter: UIView {
             }
         }
         
-        for (i, item) in itemsToAnimate.enumerated() {
-            let diff = CGFloat(itemsToAnimate.count - (i + 1))
+        for (i, item) in itemsBeingAnimated.enumerated() {
+            let diff = CGFloat(itemsBeingAnimated.count - (i + 1))
             animator.addAnimations {
                 switch direction {
                 case .down:
@@ -124,6 +124,7 @@ public class ScrollableCounter: UIView {
                     self.items[i].removeFromSuperview()
                 }
             }
+            self.itemsBeingAnimated.removeAll()
         }
         
         animator.startAnimation()
@@ -131,58 +132,9 @@ public class ScrollableCounter: UIView {
         
     }
     
-//    private func showNextItem(_ direction: ScrollDirection, duration: TimeInterval, completion: (() -> Void)?) {
-//        if let latestDirection = latestDirection, latestDirection != direction, currentItem.frame.origin != CGPoint.zero {
-//            let currentProgress = abs(currentItem.top - currentItem.frame.height) / currentItem.frame.height
-//            let normalizeDuration = duration * TimeInterval(1 - currentProgress)
-//            normalize(direction: direction, duration: normalizeDuration, completion: completion)
-//            return
-//        }
-//        latestDirection = direction
-//
-//        var currentItemEndY = -currentItem.frame.height
-//        var nextItemStartPoint = CGPoint(x: 0, y: currentItem.bottom)
-//        let nextItemEndPoint = CGPoint.zero
-//        var nextItemShift = -1
-//
-//        if direction == .down {
-//            currentItemEndY = currentItem.frame.height
-//            nextItemStartPoint = CGPoint(x: 0, y: currentItem.top - currentItem.frame.height)
-//            nextItemShift = 1
-//        }
-//
-//        let animator = UIViewPropertyAnimator(duration: duration, curve: .linear, animations: nil)
-//
-//        animator.addAnimations {
-//            self.currentItem.frame.origin = CGPoint(x: 0, y: currentItemEndY)
-//        }
-//
-//        var nextItemIndex = (currentIndex + nextItemShift) % items.count
-//        if nextItemIndex < 0 {
-//            nextItemIndex = items.count - 1
-//        }
-//
-//        let nextItem = items[nextItemIndex]
-//        nextItem.frame.origin = nextItemStartPoint
-//        addSubview(nextItem)
-//        animator.addAnimations {
-//            nextItem.frame.origin = nextItemEndPoint
-//        }
-//
-//        animator.addCompletion { position in
-//            if let completion = completion {
-//                self.currentItem.removeFromSuperview()
-//                self.currentIndex = nextItemIndex
-//                completion()
-//            }
-//        }
-//
-//        animator.startAnimation()
-//        self.animator = animator
-//    }
-    
     public func scrollToItem(atIndex index: Int) {
         stop()
+        resetClosestIndex()
         var direction: ScrollDirection
         
         var downDistance: Int
@@ -211,57 +163,78 @@ public class ScrollableCounter: UIView {
             }
         }
         
-//        scrollToItem(atIndex: index, direction: direction)
         animateToItem(atIndex: index, direction: direction)
     }
     
-//    public func scrollToItem(atIndex index: Int, direction: ScrollDirection) {
-//        guard index != currentIndex else {
-//            return
-//        }
-//        var nTimes: Int = 0
-//
-//        switch direction {
-//        case .down:
-//            if index > currentIndex {
-//                nTimes = index - currentIndex
-//            } else {
-//                nTimes = items.count - currentIndex + index
-//            }
-//        case .up:
-//            if index < currentIndex {
-//                nTimes = currentIndex - index
-//            } else {
-//                nTimes = items.count + currentIndex - index
-//            }
-//        }
-//
-//        scrollNext(direction, nTimes: nTimes)
-//    }
-//
-//    public func scrollNext(_ direction: ScrollDirection, nTimes: Int) {
-//        guard nTimes > 0 else {
-//            return
-//        }
-//
-//        self.scrollNext(direction, durationPerItem: totalDuration/TimeInterval(nTimes), nTimes: nTimes)
-//    }
-//
-//    func scrollNext(_ direction: ScrollDirection, durationPerItem duration: TimeInterval, nTimes: Int) {
-//        guard nTimes > 0 else {
-//            return
-//        }
-//
-//        showNextItem(direction, duration: duration) {
-//            self.scrollNext(direction, durationPerItem: duration, nTimes: nTimes - 1)
-//        }
-//    }
+    private func removeDanglingItems() {
+        for item in itemsBeingAnimated {
+            if abs(item.frame.origin.y) >= frame.height {
+                item.removeFromSuperview()
+            }
+        }
+        
+        itemsBeingAnimated.removeAll { item -> Bool in
+            return item.superview == nil
+        }
+    }
+    
+    private func resetCurrentIndex(direction: ScrollDirection) {
+        guard itemsBeingAnimated.count == 2 else {
+            return
+        }
+        let item0 = itemsBeingAnimated[0]
+        let item1 = itemsBeingAnimated[1]
+        
+        switch direction {
+        case .down:
+            if item0.top > 0 {
+                currentIndex = item0.tag
+            } else {
+                currentIndex = item1.tag
+            }
+        case .up:
+            if item0.top < 0 {
+                currentIndex = item0.tag
+            } else {
+                currentIndex = item1.tag
+            }
+        }
+        
+        if currentIndex == item0.tag {
+            itemsBeingAnimated = [item0, item1]
+        } else {
+            itemsBeingAnimated = [item1, item0]
+        }
+        
+    }
+    
+    func resetClosestIndex() {
+        guard itemsBeingAnimated.count == 2 else {
+            return
+        }
+        let item0 = itemsBeingAnimated[0]
+        let item1 = itemsBeingAnimated[1]
+        
+        if abs(item0.top) < abs(item0.top) {
+            currentIndex = item0.tag
+        } else {
+            currentIndex = item1.tag
+        }
+        
+        if currentIndex == item0.tag {
+            itemsBeingAnimated = [item0, item1]
+        } else {
+            itemsBeingAnimated = [item1, item0]
+        }
+    }
     
     public func stop() {
         if let animator = animator {
             animator.stopAnimation(true)
         }
+        removeDanglingItems()
     }
+    
     
     
 }
