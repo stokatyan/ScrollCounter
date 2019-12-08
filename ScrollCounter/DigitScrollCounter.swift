@@ -60,7 +60,6 @@ public class DigitScrollCounter: ScrollableCounter {
         }
         
         super.init(items: items, frame: biggestFrame)
-        self.backgroundColor = backgroundColor
     }
     
     required init?(coder: NSCoder) {

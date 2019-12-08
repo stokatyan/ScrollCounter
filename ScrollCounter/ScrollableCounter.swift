@@ -52,6 +52,13 @@ public class ScrollableCounter: UIView {
     /// The animation curve for a scroll animation.
     var animationCurve: AnimationCurve = .easeInOut
     
+    var height: CGFloat {
+        return frame.height
+    }
+    var width: CGFloat {
+        return frame.width
+    }
+    
     // MARK: - Init
     
     /**
