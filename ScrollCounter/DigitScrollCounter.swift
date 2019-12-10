@@ -18,7 +18,7 @@ public class DigitScrollCounter: ScrollableCounter {
      - note:
      The value of `min` must be less than the value of `max`.
      */
-    public init(min: Int = 0, max: Int = 9, font: UIFont = UIFont.boldSystemFont(ofSize: UIFont.labelFontSize), textColor: UIColor = .black, backgroundColor: UIColor = .white) {
+    public init(min: Int = 0, max: Int = 9, font: UIFont, textColor: UIColor, backgroundColor: UIColor) {
         assert(min < max, "The min value must be less than the max value.")
         var labels = [UILabel]()
         

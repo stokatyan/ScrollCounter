@@ -13,7 +13,8 @@ public class NumberScrollCounter: UIView {
     // MARK: - Parameters
     
     private var digitScrollers = [DigitScrollCounter]()
-    var scrollDuration: TimeInterval = 0.33
+    var scrollDuration: TimeInterval = 0.5
+    var fadeOutDuration: TimeInterval = 0.2
     
     var currentValue: Float
     
@@ -25,9 +26,15 @@ public class NumberScrollCounter: UIView {
     let suffix: String
     let seperator: String
     
+    /// The animator controlling the current animation in the ScrollableCounter.
+    private var animator: UIViewPropertyAnimator?
+    
+    /// The animation curve for a scroll animation.
+    var animationCurve: AnimationCurve = .easeInOut
+    
     // MARK: - Init
     
-    public init(value: Float, decimalPlaces: Int = 0, prefix: String = "", suffix: String = "", seperator: String = ".", font: UIFont = UIFont.boldSystemFont(ofSize: UIFont.labelFontSize), textColor: UIColor = .black, backgroundColor: UIColor = .white) {
+    public init(value: Float, decimalPlaces: Int = 0, prefix: String = "", suffix: String = "", seperator: String = ".", font: UIFont = UIFont.boldSystemFont(ofSize: UIFont.labelFontSize), textColor: UIColor = .black, backgroundColor: UIColor = .clear) {
 
         self.currentValue = value
         
@@ -94,10 +101,31 @@ public class NumberScrollCounter: UIView {
     // MARK: - Scroller Updates
     
     private func updateScrollerLayout() {
-        for (index, scroller) in digitScrollers.enumerated() {
-            addSubview(scroller)
-            scroller.frame.origin.x = CGFloat(index) * scroller.width
+        if animator != nil {
+            animator!.stopAnimation(true)
         }
+        animator = UIViewPropertyAnimator(duration: scrollDuration, curve: animationCurve, animations: nil)
+        
+        for (index, scroller) in digitScrollers.enumerated() {
+            var animateIn = false
+            if scroller.superview == nil {
+                addSubview(scroller)
+                scroller.alpha = 0
+                animateIn = true
+            }
+            animator!.addAnimations {
+                if animateIn {
+                    scroller.alpha = 1
+                }
+                scroller.frame.origin.x = CGFloat(index) * scroller.width
+            }
+        }
+        
+        animator!.addCompletion({ _ in
+            self.animator = nil
+        })
+        
+        animator!.startAnimation()
     }
     
     private func updateScrollers(add count: Int) {
@@ -111,9 +139,17 @@ public class NumberScrollCounter: UIView {
     }
     
     private func updateScrollers(remove count: Int) {
-        for _ in 0..<count {
-            digitScrollers[0].removeFromSuperview()
+        for index in 0..<count {
+            let scroller = digitScrollers[0]
+            let leftShift = CGFloat(index) * scroller.frame.width * -1
+            
             digitScrollers.remove(at: 0)
+            UIView.animate(withDuration: fadeOutDuration, delay: 0, options: .curveEaseInOut, animations: {
+                scroller.alpha = 0
+                scroller.frame.origin.x += leftShift
+            }) { _ in
+                scroller.removeFromSuperview()
+            }
         }
         
         updateScrollerLayout()
