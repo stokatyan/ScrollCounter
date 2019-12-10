@@ -18,4 +18,16 @@ extension UIView {
         return frame.origin.y
     }
     
+    func animateIn() {
+        
+    }
+    
+}
+
+
+extension Float {
+    func round(toPlaces places: Int) -> Float {
+        let divisor = pow(10.0, Float(places))
+        return (self * divisor).rounded() / divisor
+    }
 }
