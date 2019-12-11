@@ -39,6 +39,17 @@ public class NumberScrollCounter: UIView {
     /// The animation curve for a scroll animation.
     var animationCurve: AnimationCurve = .easeInOut
     
+    private var startingXCoordinate: CGFloat {
+        var startingX: CGFloat = 0
+        if let prefixView = prefixView {
+            startingX += prefixView.frame.width
+        }
+        if let negativeSignView = negativeSignView, currentValue < 0 {
+            startingX += negativeSignView.frame.width
+        }
+        return startingX
+    }
+    
     // MARK: - Init
     
     public init(value: Float, decimalPlaces: Int = 0, prefix: String? = nil, suffix: String? = nil, seperator: String = ".", font: UIFont = UIFont.boldSystemFont(ofSize: UIFont.labelFontSize), textColor: UIColor = .black, digitBackgroundColor: UIColor = .clear) {
@@ -69,7 +80,7 @@ public class NumberScrollCounter: UIView {
     // MARK: - Control
     
     public func setValue(_ value: Float) {
-        currentValue = value.round(toPlaces: decimalPlaces)
+        currentValue = value
         
         var digitString = getStringArray(fromValue: currentValue)
         if decimalPlaces == 0 {
@@ -96,7 +107,7 @@ public class NumberScrollCounter: UIView {
     }
     
     private func getStringArray(fromValue value: Float) -> [String] {
-        return String(value).compactMap { character -> String in
+        return String(format: "%.\(decimalPlaces)f", value).compactMap { character -> String in
             var entry = seperator
             let result = character.wholeNumberValue
             if let resultNumber = result {
@@ -115,12 +126,45 @@ public class NumberScrollCounter: UIView {
         }
         animator = UIViewPropertyAnimator(duration: scrollDuration, curve: animationCurve, animations: nil)
         
+        updateNegativeSign()
+        updatePrefix()
+        updateDigitScrollersLayout()
+        
+        animator!.addCompletion({ _ in
+            self.animator = nil
+        })
+        animator!.startAnimation()
+    }
+    
+    private func updateDigitScrollersLayout() {
+        guard let animator = self.animator else {
+            return
+        }
+        
+        let startingX = startingXCoordinate
+        for (index, scroller) in digitScrollers.enumerated() {
+            if scroller.superview == nil {
+                addSubview(scroller)
+                scroller.frame.origin.x = startingX
+                scroller.alpha = 0
+            }
+            animator.addAnimations {
+                scroller.alpha = 1
+                scroller.frame.origin.x = startingX + CGFloat(index) * scroller.width
+            }
+        }
+    }
+    
+    private func updateNegativeSign() {
+        guard let animator = self.animator else {
+            return
+        }
+        
         let includeNegativeSign = currentValue < 0
-        print(includeNegativeSign)
         
         if includeNegativeSign {
             if let negativeSignView = negativeSignView, negativeSignView.alpha != 1 {
-                animator!.addAnimations {
+                animator.addAnimations {
                     negativeSignView.alpha = 1
                 }
             } else if negativeSignView == nil {
@@ -134,21 +178,29 @@ public class NumberScrollCounter: UIView {
                 
                 negativeLabel.alpha = 0
                 negativeSignView = negativeLabel
-                animator!.addAnimations {
+                animator.addAnimations {
                     negativeLabel.alpha = 1
                 }
             }
         } else {
             if let negativeSignView = negativeSignView {
-                animator!.addAnimations {
+                animator.addAnimations {
                     negativeSignView.alpha = 0
                 }
-                animator!.addCompletion { _ in
+                animator.addCompletion { _ in
                     negativeSignView.removeFromSuperview()
                     self.negativeSignView = nil
                 }
             }
         }
+    }
+    
+    func updatePrefix() {
+        guard let animator = self.animator else {
+            return
+        }
+        
+        let includeNegativeSign = currentValue < 0
         
         if prefixView == nil, let prefix = prefix {
             let prefixLabel = UILabel()
@@ -168,37 +220,11 @@ public class NumberScrollCounter: UIView {
             if let negativeSignView = negativeSignView, includeNegativeSign {
                 prefixX = negativeSignView.frame.width
             }
-            animator!.addAnimations {
+            animator.addAnimations {
                 prefixView.frame.origin.x = prefixX
                 prefixView.alpha = 1
             }
         }
-        
-        var startingX: CGFloat = 0
-        if let prefixView = prefixView {
-            startingX += prefixView.frame.width
-        }
-        if let negativeSignView = negativeSignView, includeNegativeSign {
-            startingX += negativeSignView.frame.width
-        }
-        
-        for (index, scroller) in digitScrollers.enumerated() {
-            if scroller.superview == nil {
-                addSubview(scroller)
-                scroller.frame.origin.x = startingX
-                scroller.alpha = 0
-            }
-            animator!.addAnimations {
-                scroller.alpha = 1
-                scroller.frame.origin.x = startingX + CGFloat(index) * scroller.width
-            }
-        }
-        
-        animator!.addCompletion({ _ in
-            self.animator = nil
-        })
-        
-        animator!.startAnimation()
     }
     
     private func updateScrollers(add count: Int) {
