@@ -128,6 +128,7 @@ public class NumberScrollCounter: UIView {
         
         updateNegativeSign()
         updatePrefix()
+        createSeperatorViewIfNeeded()
         updateDigitScrollersLayout()
         
         animator!.addCompletion({ _ in
@@ -136,12 +137,32 @@ public class NumberScrollCounter: UIView {
         animator!.startAnimation()
     }
     
+    private func createSeperatorViewIfNeeded() {
+        guard decimalPlaces > 0, seperatorView == nil else {
+            return
+        }
+        
+        let seperatorLabel = UILabel()
+        seperatorLabel.text = seperator
+        seperatorLabel.textColor = textColor
+        seperatorLabel.font = font
+        seperatorLabel.sizeToFit()
+        seperatorLabel.frame.origin = CGPoint.zero
+        addSubview(seperatorLabel)
+        
+        seperatorLabel.alpha = 0
+        seperatorView = seperatorLabel
+    }
+    
     private func updateDigitScrollersLayout() {
         guard let animator = self.animator else {
             return
         }
         
         let startingX = startingXCoordinate
+        let seperatorLocation = digitScrollers.count - decimalPlaces
+//        var seperatorOffset: CGFloat = 0
+        
         for (index, scroller) in digitScrollers.enumerated() {
             if scroller.superview == nil {
                 addSubview(scroller)
@@ -151,6 +172,14 @@ public class NumberScrollCounter: UIView {
             animator.addAnimations {
                 scroller.alpha = 1
                 scroller.frame.origin.x = startingX + CGFloat(index) * scroller.width
+            }
+            
+            if index == seperatorLocation, let seperatorView = seperatorView {
+//                seperatorOffset = seperatorView.frame.width
+                animator.addAnimations {
+                    seperatorView.alpha = 1
+                    seperatorView.frame.origin.x = (startingX + CGFloat(index) * scroller.width) - scroller.width/4
+                }
             }
         }
     }
