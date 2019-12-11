@@ -18,7 +18,8 @@ public class NumberScrollCounter: UIView {
     
     public private(set) var currentValue: Float
     
-    var decimalPlaces: Int = 0
+    var seperatorSpacing: CGFloat
+    var decimalPlaces: Int
     let font: UIFont
     let textColor: UIColor
     let digitBackgroundColor: UIColor
@@ -52,7 +53,7 @@ public class NumberScrollCounter: UIView {
     
     // MARK: - Init
     
-    public init(value: Float, decimalPlaces: Int = 0, prefix: String? = nil, suffix: String? = nil, seperator: String = ".", font: UIFont = UIFont.boldSystemFont(ofSize: UIFont.labelFontSize), textColor: UIColor = .black, digitBackgroundColor: UIColor = .clear) {
+    public init(value: Float, decimalPlaces: Int = 0, prefix: String? = nil, suffix: String? = nil, seperator: String = ".", seperatorSpacing: CGFloat = 5, font: UIFont = UIFont.boldSystemFont(ofSize: UIFont.labelFontSize), textColor: UIColor = .black, digitBackgroundColor: UIColor = .clear) {
 
         self.currentValue = value
         
@@ -64,6 +65,7 @@ public class NumberScrollCounter: UIView {
         self.prefix = prefix
         self.suffix = suffix
         self.seperator = seperator
+        self.seperatorSpacing = seperatorSpacing
         
         super.init(frame: CGRect.zero)
         
@@ -161,7 +163,6 @@ public class NumberScrollCounter: UIView {
         
         let startingX = startingXCoordinate
         let seperatorLocation = digitScrollers.count - decimalPlaces
-//        var seperatorOffset: CGFloat = 0
         
         for (index, scroller) in digitScrollers.enumerated() {
             if scroller.superview == nil {
@@ -169,16 +170,20 @@ public class NumberScrollCounter: UIView {
                 scroller.frame.origin.x = startingX
                 scroller.alpha = 0
             }
+            
+            var x = startingX + CGFloat(index) * scroller.width
+            if index >= seperatorLocation {
+                x += 2 * seperatorSpacing
+            }
             animator.addAnimations {
                 scroller.alpha = 1
-                scroller.frame.origin.x = startingX + CGFloat(index) * scroller.width
+                scroller.frame.origin.x = x
             }
             
             if index == seperatorLocation, let seperatorView = seperatorView {
-//                seperatorOffset = seperatorView.frame.width
                 animator.addAnimations {
                     seperatorView.alpha = 1
-                    seperatorView.frame.origin.x = (startingX + CGFloat(index) * scroller.width) - scroller.width/4
+                    seperatorView.frame.origin.x = (startingX + CGFloat(index) * scroller.width) - scroller.width/4 + self.seperatorSpacing
                 }
             }
         }
