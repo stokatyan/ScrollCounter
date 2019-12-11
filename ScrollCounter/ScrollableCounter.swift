@@ -8,7 +8,6 @@
 
 import UIKit
 
-
 /**
  The building block for a `ScrollCounter`.  A `ScrollableCounter` scrolls between a given list of views.
  */
@@ -33,10 +32,10 @@ public class ScrollableCounter: UIView {
     // MARK: - Properties
     
     /// The views that will be scrolled.
-    let items: [UIView]
+    private let items: [UIView]
     
     /// The index of the currently selected item.
-    private var currentIndex = 0
+    public private(set) var currentIndex = 0
     /// The item that is currently selected.
     private var currentItem: UIView {
         return items[currentIndex]
@@ -48,7 +47,7 @@ public class ScrollableCounter: UIView {
     private var itemsBeingAnimated = [UIView]()
     
     /// The total duration of a scroll animation.
-    var totalDuration: TimeInterval = 0.33
+    var scrollDuration: TimeInterval = 0
     /// The animation curve for a scroll animation.
     var animationCurve: AnimationCurve = .easeInOut
     
@@ -138,7 +137,7 @@ public class ScrollableCounter: UIView {
      - returns: The `UIViewPropertyAnimator` that will be in charge of the the build animations.
      */
     private func buildAnimations(direction: ScrollDirection) -> UIViewPropertyAnimator {
-        let animator = UIViewPropertyAnimator(duration: totalDuration, curve: animationCurve, animations: nil)
+        let animator = UIViewPropertyAnimator(duration: scrollDuration, curve: animationCurve, animations: nil)
         for (i, item) in itemsBeingAnimated.enumerated() {
             let diff = CGFloat(itemsBeingAnimated.count - (i + 1))
             animator.addAnimations {
@@ -298,23 +297,35 @@ public class ScrollableCounter: UIView {
      Resets `currentIndex` to the index of the item in `itemsBeingAnimated` that is the most visible.
      */
     func resetCurrentIndexToClosest() {
-        guard itemsBeingAnimated.count == 2 else {
+        guard itemsBeingAnimated.count >= 2 else {
+            if let onlyItem = itemsBeingAnimated.first {
+                currentIndex = onlyItem.tag
+            }
             return
         }
-        let item0 = itemsBeingAnimated[0]
-        let item1 = itemsBeingAnimated[1]
         
-        if abs(item0.top) < abs(item0.top) {
-            currentIndex = item0.tag
-        } else {
-            currentIndex = item1.tag
+        var minDistance: CGFloat = CGFloat.greatestFiniteMagnitude
+        var minDistIndex: Int = 0
+        var minDistance2: CGFloat = CGFloat.greatestFiniteMagnitude
+        var minDistIndex2: Int = 0
+        for (index, item) in itemsBeingAnimated.enumerated() {
+            let distance = abs(item.top)
+            if distance < minDistance {
+                minDistance2 = minDistance
+                minDistIndex2 = minDistIndex
+                
+                minDistance = distance
+                minDistIndex = index
+            } else if distance < minDistance2 {
+                minDistance2 = distance
+                minDistIndex2 = index
+            }
         }
         
-        if currentIndex == item0.tag {
-            itemsBeingAnimated = [item0, item1]
-        } else {
-            itemsBeingAnimated = [item1, item0]
-        }
+        currentIndex = minDistIndex
+        let item0 = itemsBeingAnimated[minDistIndex]
+        let item1 = itemsBeingAnimated[minDistIndex2]
+        itemsBeingAnimated = [item0, item1]
     }
     
     /**

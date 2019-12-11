@@ -13,19 +13,21 @@ public class NumberScrollCounter: UIView {
     // MARK: - Parameters
     
     private var digitScrollers = [DigitScrollCounter]()
-    var scrollDuration: TimeInterval = 0.5
-    var fadeOutDuration: TimeInterval = 0.2
+    
+    public var fadeOutDuration: TimeInterval = 0.2
+    public var scrollDuration: TimeInterval
+    public var slideDuration: TimeInterval = 0.5
     
     public private(set) var currentValue: Float
     
-    var seperatorSpacing: CGFloat
-    var decimalPlaces: Int
+    public var seperatorSpacing: CGFloat
+    public var decimalPlaces: Int
     let font: UIFont
     let textColor: UIColor
     let digitBackgroundColor: UIColor
     
-    var prefix: String?
-    var suffix: String?
+    public var prefix: String?
+    public var suffix: String?
     var seperator: String
     let negativeSign = "-"
     
@@ -53,7 +55,7 @@ public class NumberScrollCounter: UIView {
     
     // MARK: - Init
     
-    public init(value: Float, decimalPlaces: Int = 0, prefix: String? = nil, suffix: String? = nil, seperator: String = ".", seperatorSpacing: CGFloat = 5, font: UIFont = UIFont.boldSystemFont(ofSize: UIFont.labelFontSize), textColor: UIColor = .black, digitBackgroundColor: UIColor = .clear) {
+    public init(value: Float, scrollDuration: TimeInterval, decimalPlaces: Int = 0, prefix: String? = nil, suffix: String? = nil, seperator: String = ".", seperatorSpacing: CGFloat = 5, font: UIFont = UIFont.boldSystemFont(ofSize: UIFont.labelFontSize), textColor: UIColor = .black, digitBackgroundColor: UIColor = .clear) {
 
         self.currentValue = value
         
@@ -66,6 +68,8 @@ public class NumberScrollCounter: UIView {
         self.suffix = suffix
         self.seperator = seperator
         self.seperatorSpacing = seperatorSpacing
+        
+        self.scrollDuration = scrollDuration
         
         super.init(frame: CGRect.zero)
         
@@ -126,7 +130,7 @@ public class NumberScrollCounter: UIView {
         if let animator = self.animator {
             animator.stopAnimation(true)
         }
-        animator = UIViewPropertyAnimator(duration: scrollDuration, curve: animationCurve, animations: nil)
+        animator = UIViewPropertyAnimator(duration: slideDuration, curve: animationCurve, animations: nil)
         
         updateNegativeSign()
         updatePrefix()
@@ -264,7 +268,7 @@ public class NumberScrollCounter: UIView {
     private func updateScrollers(add count: Int) {
         var newScrollers = [DigitScrollCounter]()
         for _ in 0..<count {
-            newScrollers.append(DigitScrollCounter(font: font, textColor: textColor, backgroundColor: digitBackgroundColor))
+            newScrollers.append(DigitScrollCounter(font: font, textColor: textColor, backgroundColor: digitBackgroundColor, scrollDuration: scrollDuration))
         }
         digitScrollers.insert(contentsOf: newScrollers, at: 0)
     }
