@@ -94,8 +94,9 @@ public class NumberScrollCounter: UIView {
         - font: The font to use for the digits, prefix, suffix, and seperator.
         - textColor: The text color to use for the digits, prefix, suffix, and seperator.
         - digitBackgroundColor: The background color to use for the digits.
+        - animateInitialValue: Whether or not the initial value should be animated to. Defaults to `false`.
      */
-    public init(value: Float, scrollDuration: TimeInterval = 0.3, decimalPlaces: Int = 0, prefix: String? = nil, suffix: String? = nil, seperator: String = ".", seperatorSpacing: CGFloat = 5, font: UIFont = UIFont.boldSystemFont(ofSize: UIFont.labelFontSize), textColor: UIColor = .black, digitBackgroundColor: UIColor = .clear) {
+    public init(value: Float, scrollDuration: TimeInterval = 0.3, decimalPlaces: Int = 0, prefix: String? = nil, suffix: String? = nil, seperator: String = ".", seperatorSpacing: CGFloat = 5, font: UIFont = UIFont.boldSystemFont(ofSize: UIFont.labelFontSize), textColor: UIColor = .black, digitBackgroundColor: UIColor = .clear, animateInitialValue: Bool = false) {
 
         self.currentValue = value
         
@@ -115,7 +116,7 @@ public class NumberScrollCounter: UIView {
         
         self.clipsToBounds = false
         
-        setValue(value)
+        setValue(value, animated: animateInitialValue)
         frame.size.height = digitScrollers.first!.height
     }
     
@@ -129,8 +130,9 @@ public class NumberScrollCounter: UIView {
      Updates the value to be displayed, and then immediately displays it or animates into it.
      - parameters:
         - value: The value to display.
+        - animated: Whether or not the scrolling should be animated.  Defaults to `true`.
      */
-    public func setValue(_ value: Float) {
+    public func setValue(_ value: Float, animated: Bool = true) {
         currentValue = value
         
         var digitString = getStringArray(fromValue: currentValue)
@@ -148,13 +150,15 @@ public class NumberScrollCounter: UIView {
         }
      
         if digitsOnly.count > digitScrollers.count {
-            updateScrollers(add: digitsOnly.count - digitScrollers.count)
+            let digitsToAdd = digitsOnly.count - digitScrollers.count
+            updateScrollers(add: digitsToAdd)
         } else if digitScrollers.count > digitsOnly.count {
-            updateScrollers(remove: digitScrollers.count - digitsOnly.count)
+            let digitsToRemove = digitScrollers.count - digitsOnly.count
+            updateScrollers(remove: digitsToRemove, animated: animated)
         }
         
-        updateScrollers(withDigits: digitsOnly)
-        updateScrollerLayout()
+        updateScrollers(withDigits: digitsOnly, animated: animated)
+        updateScrollerLayout(animated: animated)
     }
     
     /**
@@ -193,12 +197,20 @@ public class NumberScrollCounter: UIView {
         5. Update the layout of each item in`digitScrollers`, the negative sign, prefix, and decimal.
         6. Update the location of the suffix.
         7. Animate the transition to the updated layout.
+     
+     - parameters:
+        - animated: Whether or not the scrolling should be animated.  Defaults to `true`.
      */
-    private func updateScrollerLayout() {
+    private func updateScrollerLayout(animated: Bool) {
         if let animator = self.animator {
             animator.stopAnimation(true)
         }
-        animator = UIViewPropertyAnimator(duration: slideDuration, curve: animationCurve, animations: nil)
+        
+        var animationDuration = slideDuration
+        if !animated {
+            animationDuration = ScrollableCounter.noAnimationDuration
+        }
+        animator = UIViewPropertyAnimator(duration: animationDuration, curve: animationCurve, animations: nil)
         
         updateNegativeSign()
         updatePrefix()
@@ -370,14 +382,19 @@ public class NumberScrollCounter: UIView {
     
     - parameters:
        - count: The number of digits to remove.
+       - animated: Whether or not the scrolling should be animated.
     */
-    private func updateScrollers(remove count: Int) {
+    private func updateScrollers(remove count: Int, animated: Bool) {
+        var animationDuration = fadeOutDuration
+        if !animated {
+            animationDuration = ScrollableCounter.noAnimationDuration
+        }
         for index in 0..<count {
             let scroller = digitScrollers[0]
             let leftShift = CGFloat(index) * scroller.frame.width * -1
             
             digitScrollers.remove(at: 0)
-            UIView.animate(withDuration: fadeOutDuration, delay: 0, options: .curveEaseInOut, animations: {
+            UIView.animate(withDuration: animationDuration, delay: 0, options: .curveEaseInOut, animations: {
                 scroller.alpha = 0
                 scroller.frame.origin.x += leftShift
             }) { _ in
@@ -394,11 +411,12 @@ public class NumberScrollCounter: UIView {
      
      - parameters:
         - digits: The digits that each item in `digitScrollers` should be scroleld to.
+        - animated: Whether or not the scrolling should be animated.  Defaults to `true`.
      */
-    private func updateScrollers(withDigits digits: [Int]) {
+    private func updateScrollers(withDigits digits: [Int], animated: Bool) {
         if digits.count == digitScrollers.count {
             for (i, scroller) in digitScrollers.enumerated() {
-                scroller.scrollToItem(atIndex: digits[i])
+                scroller.scrollToItem(atIndex: digits[i], animated: animated)
             }
         }
     }
