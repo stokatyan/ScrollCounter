@@ -8,32 +8,53 @@
 
 import UIKit
 
+/**
+ A view that composes a collection of `DigitScrollCounter`s and punctuations to create a number that can be animated with a scrolling effect as seen in the Robinhood app.
+ */
 public class NumberScrollCounter: UIView {
     
     // MARK: - Parameters
     
+    /// The `DigitScrollCounter`s that are stacked horizontally to make up the displayed number.
     private var digitScrollers = [DigitScrollCounter]()
     
+    /// The animation duration used when fading-out a `DigitScrollCounter`.
     public var fadeOutDuration: TimeInterval = 0.2
+    /// The animation duration used when a `DigitScrollCounter` is scrolling to a number.
     public var scrollDuration: TimeInterval
+    /// The animation duration when the items in `digitScrollers` are slid to their new origins.
     public var slideDuration: TimeInterval = 0.5
     
+    /// The current value being displayed, or the number being animated to if the `NumberScrollCounter` is still animating.
     public private(set) var currentValue: Float
     
+    /// The spacing between the `seperator` and the adjacent items in `digitScrollers`.
     public var seperatorSpacing: CGFloat
+    /// The number of decimal places that should be displayed.
     public var decimalPlaces: Int
+    /// The font to use for all of the labels used in building the `NumberScrollCounter`.
     let font: UIFont
+    /// The text color to use for all of the labels used in building the `NumberScrollCounter`.
     let textColor: UIColor
+    /// Thebackground color to use for all of the labels used in `digitScrollers`.
     let digitBackgroundColor: UIColor
     
+    /// The string to use as a prefix to the items in `digitScrollers`.
     public var prefix: String?
+    /// The string to use as a suffix to the items in `digitScrollers`.
     public var suffix: String?
+    /// The string to use as the decimal indicator for the items in `digitScrollers`.
     var seperator: String
+    /// The string that will be used to represent negative values.
     let negativeSign = "-"
     
+    /// The view that holds the prefix, or `nil` if there is no prefix.
     private var prefixView: UIView?
+    /// The view that holds the suffix, or `nil` if there is no suffix.
     private var suffixView: UIView?
+    /// The view that holds the seperator, or `nil` if there is no seperator.
     private var seperatorView: UIView?
+    /// The view that holds the negative sign, or `nil` if the number is not negative.
     private var negativeSignView: UIView?
     
     /// The animator controlling the current animation in the ScrollableCounter.
@@ -42,6 +63,7 @@ public class NumberScrollCounter: UIView {
     /// The animation curve for a scroll animation.
     var animationCurve: AnimationCurve = .easeInOut
     
+    /// The starting x-coordinate for the stacked views, this only changes when a negative sign needs to be displayed.
     private var startingXCoordinate: CGFloat {
         var startingX: CGFloat = 0
         if let prefixView = prefixView {
@@ -55,7 +77,25 @@ public class NumberScrollCounter: UIView {
     
     // MARK: - Init
     
-    public init(value: Float, scrollDuration: TimeInterval, decimalPlaces: Int = 0, prefix: String? = nil, suffix: String? = nil, seperator: String = ".", seperatorSpacing: CGFloat = 5, font: UIFont = UIFont.boldSystemFont(ofSize: UIFont.labelFontSize), textColor: UIColor = .black, digitBackgroundColor: UIColor = .clear) {
+    /**
+     Initialize a `NumberScrollCounter` with the given parameters.
+     
+     - note:
+     To get a design similar to Robinhood, try using `"Avenir-Black"` as the font.
+     
+     - parameters:
+        - value: The initial value to display.
+        - scrollDuration: The duration that is used when animating a single digit's scrolling animation.  Defaults to `0.3`.
+        - decimalPlaces: The number of decimals to display.  Defaults to `0`.
+        - prefix: The prefix to use in front of the displayed number.  Defaults to `nil`, which results in no prefix.
+        - suffix: The suffix to use at the end of the displayed number.  Defaults to `nil`, which results in no suffix.
+        - seperator: The seperator to use to represent a decimal.  Defaults to `"."`.
+        - seperatorSpacing: The spacing to use between the seperator and the adjacent digits.  Defaults to `5`.
+        - font: The font to use for the digits, prefix, suffix, and seperator.
+        - textColor: The text color to use for the digits, prefix, suffix, and seperator.
+        - digitBackgroundColor: The background color to use for the digits.
+     */
+    public init(value: Float, scrollDuration: TimeInterval = 0.3, decimalPlaces: Int = 0, prefix: String? = nil, suffix: String? = nil, seperator: String = ".", seperatorSpacing: CGFloat = 5, font: UIFont = UIFont.boldSystemFont(ofSize: UIFont.labelFontSize), textColor: UIColor = .black, digitBackgroundColor: UIColor = .clear) {
 
         self.currentValue = value
         
@@ -85,6 +125,11 @@ public class NumberScrollCounter: UIView {
     
     // MARK: - Control
     
+    /**
+     Updates the value to be displayed, and then immediately displays it or animates into it.
+     - parameters:
+        - value: The value to display.
+     */
     public func setValue(_ value: Float) {
         currentValue = value
         
@@ -112,6 +157,17 @@ public class NumberScrollCounter: UIView {
         updateScrollerLayout()
     }
     
+    /**
+     Converts the given float to an array of strings.
+    
+     The given value will have each individual digit (ignoring any decimal seperator) mapped to an element in an array.
+     
+     ``` getStringArray(246.89) = ["2", "4", "6", "8", "9"] ```
+     
+     - parameters:
+        - value: The value to convert to an array of strings.
+     - returns: An array of strings that matches the given value.
+     */
     private func getStringArray(fromValue value: Float) -> [String] {
         return String(format: "%.\(decimalPlaces)f", value).compactMap { character -> String in
             var entry = seperator
@@ -126,6 +182,18 @@ public class NumberScrollCounter: UIView {
     
     // MARK: - Scroller Updates
     
+    /**
+     Updates the layout of the subviews used for displaying the current number.
+     
+     The updates to the layouts involves the following steps:
+        1. Stop the animator if it is currently animating.
+        2. Update the negative sign (whether or not it exists).
+        3. Update the prefix (the position will change depending on the negative signs existance).
+        4. Create the decimal seperator if it is needed and one does not exist.
+        5. Update the layout of each item in`digitScrollers`, the negative sign, prefix, and decimal.
+        6. Update the location of the suffix.
+        7. Animate the transition to the updated layout.
+     */
     private func updateScrollerLayout() {
         if let animator = self.animator {
             animator.stopAnimation(true)
@@ -143,6 +211,9 @@ public class NumberScrollCounter: UIView {
         animator!.startAnimation()
     }
     
+    /**
+     Creates a seperator view if one is needed but does not exist.  This does not update the layout of the seperator view.
+     */
     private func createSeperatorViewIfNeeded() {
         guard decimalPlaces > 0, seperatorView == nil else {
             return
@@ -160,6 +231,9 @@ public class NumberScrollCounter: UIView {
         seperatorView = seperatorLabel
     }
     
+    /**
+     Updates the layout of each item in `digitScrollers` and the seperator accordingly.
+     */
     private func updateDigitScrollersLayout() {
         guard let animator = self.animator else {
             return
@@ -193,6 +267,9 @@ public class NumberScrollCounter: UIView {
         }
     }
     
+    /**
+     Updates whether or not a negative sign is needed, and then animates any changes accordingly.
+     */
     private func updateNegativeSign() {
         guard let animator = self.animator else {
             return
@@ -233,6 +310,9 @@ public class NumberScrollCounter: UIView {
         }
     }
     
+    /**
+    Updates the location of the prefix (if there is one), and then animates any changes accordingly.
+    */
     func updatePrefix() {
         guard let animator = self.animator else {
             return
@@ -265,6 +345,15 @@ public class NumberScrollCounter: UIView {
         }
     }
     
+    /**
+     Updates the number of items in `digitScrollers` by adding the given number of additional scrollers.
+     
+     Items are added by inserting them to the beggining of `digitScrollers`.
+     This is reflected as digits being inserted before the left-most digit of the number.
+     
+     - parameters:
+        - count: The number of digits to add.
+     */
     private func updateScrollers(add count: Int) {
         var newScrollers = [DigitScrollCounter]()
         for _ in 0..<count {
@@ -273,6 +362,15 @@ public class NumberScrollCounter: UIView {
         digitScrollers.insert(contentsOf: newScrollers, at: 0)
     }
     
+    /**
+    Updates the number of items in `digitScrollers` by removing the given number of scrollers.
+    
+    Items are removed by removing them from the beggining of `digitScrollers`.
+    This is reflected as the left-most digit of the number being removed.
+    
+    - parameters:
+       - count: The number of digits to remove.
+    */
     private func updateScrollers(remove count: Int) {
         for index in 0..<count {
             let scroller = digitScrollers[0]
@@ -288,6 +386,15 @@ public class NumberScrollCounter: UIView {
         }
     }
     
+    /**
+     Updates the digit displayed by each item in `digitScrollers`.
+     
+     - note:
+     This funciton will do nothing if `digits` does not have the same number of elements as `digitScrollers`.
+     
+     - parameters:
+        - digits: The digits that each item in `digitScrollers` should be scroleld to.
+     */
     private func updateScrollers(withDigits digits: [Int]) {
         if digits.count == digitScrollers.count {
             for (i, scroller) in digitScrollers.enumerated() {
