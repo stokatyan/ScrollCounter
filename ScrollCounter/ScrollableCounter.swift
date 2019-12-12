@@ -51,6 +51,8 @@ public class ScrollableCounter: UIView {
     /// The animation curve for a scroll animation.
     var animationCurve: AnimationCurve = .easeInOut
     
+    var gradientView: UIView?
+    
     /// The animation duration to use when no animation is desired.
     static let noAnimationDuration: TimeInterval = 0.01
     
@@ -73,20 +75,33 @@ public class ScrollableCounter: UIView {
         - items: An ordered list of the views that will be scrolled.
         - frame: The frame of the `ScrollableCounter`, and the frame of every item.
      */
-    init(items: [UIView], frame: CGRect = CGRect.zero) {
+    init(items: [UIView], frame: CGRect = CGRect.zero, gradientColor: UIColor? = nil, gradientStop: Float? = nil) {
         assert(items.count > 0, "ScrollableCounter must be initialized with non empty array of items.")
         for item in items {
             assert(item.frame.equalTo(frame), "The frame of each item should equal the frame of the ScrollableCounter")
         }
         self.items = items
         super.init(frame: frame)
-        clipsToBounds = false//true
+        clipsToBounds = true
         
         addSubview(currentItem)
         currentItem.frame.origin = CGPoint.zero
         
         for (tag, item) in items.enumerated() {
             item.tag = tag
+        }
+        
+        if let gradientColor = gradientColor, let gradientStop = gradientStop {
+            let gradientLayer = CAGradientLayer()
+            gradientLayer.frame = frame
+            gradientLayer.colors = [gradientColor.cgColor, UIColor.clear.cgColor, UIColor.clear.cgColor, gradientColor.cgColor]
+            gradientLayer.locations = [0, NSNumber(value: gradientStop), NSNumber(value: 1.0 - gradientStop), 1]
+            let view = UIView(frame: frame)
+            view.backgroundColor = .clear
+            view.layer.addSublayer(gradientLayer)
+            addSubview(view)
+            bringSubviewToFront(view)
+            gradientView = view
         }
     }
     
@@ -202,6 +217,10 @@ public class ScrollableCounter: UIView {
             if itemIndex < 0 {
                 itemIndex = items.count - 1
             }
+        }
+        
+        if let gradientView = gradientView {
+            bringSubviewToFront(gradientView)
         }
     }
     
