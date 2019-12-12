@@ -8,7 +8,6 @@
 
 import UIKit
 
-
 /**
  The building block for a `ScrollCounter`.  A `ScrollableCounter` scrolls between a given list of views.
  */
@@ -33,10 +32,10 @@ public class ScrollableCounter: UIView {
     // MARK: - Properties
     
     /// The views that will be scrolled.
-    let items: [UIView]
+    private let items: [UIView]
     
     /// The index of the currently selected item.
-    private var currentIndex = 0
+    public private(set) var currentIndex = 0
     /// The item that is currently selected.
     private var currentItem: UIView {
         return items[currentIndex]
@@ -48,9 +47,19 @@ public class ScrollableCounter: UIView {
     private var itemsBeingAnimated = [UIView]()
     
     /// The total duration of a scroll animation.
-    var totalDuration: TimeInterval = 0.33
+    var scrollDuration: TimeInterval = 0
     /// The animation curve for a scroll animation.
     var animationCurve: AnimationCurve = .easeInOut
+    
+    /// The animation duration to use when no animation is desired.
+    static let noAnimationDuration: TimeInterval = 0.01
+    
+    var height: CGFloat {
+        return frame.height
+    }
+    var width: CGFloat {
+        return frame.width
+    }
     
     // MARK: - Init
     
@@ -98,12 +107,18 @@ public class ScrollableCounter: UIView {
      
      - parameters:
         - index: The index of the item to animate to.
+        - animated: Whether or not the scrolling should be animated.
      */
-    private func animateToItem(atIndex index: Int, direction: ScrollDirection) {
+    private func animateToItem(atIndex index: Int, direction: ScrollDirection, animated: Bool) {
         resetCurrentIndex(direction: direction)
         setupItemsToAnimate(atIndex: index, direction: direction)
         
-        let animator = buildAnimations(direction: direction)
+        var animationDuration = scrollDuration
+        if !animated {
+            animationDuration = ScrollableCounter.noAnimationDuration
+        }
+        
+        let animator = buildAnimations(direction: direction, duration: animationDuration)
         animator.addCompletion { position in
             self.animationCompletion(newCurrentIndex: index)
         }
@@ -130,8 +145,8 @@ public class ScrollableCounter: UIView {
      Creates a `UIViewPropertyAnimator` and adds the corresponding animations required for each view in `itemsBeingAnimated`.
      - returns: The `UIViewPropertyAnimator` that will be in charge of the the build animations.
      */
-    private func buildAnimations(direction: ScrollDirection) -> UIViewPropertyAnimator {
-        let animator = UIViewPropertyAnimator(duration: totalDuration, curve: animationCurve, animations: nil)
+    private func buildAnimations(direction: ScrollDirection, duration: TimeInterval) -> UIViewPropertyAnimator {
+        let animator = UIViewPropertyAnimator(duration: duration, curve: animationCurve, animations: nil)
         for (i, item) in itemsBeingAnimated.enumerated() {
             let diff = CGFloat(itemsBeingAnimated.count - (i + 1))
             animator.addAnimations {
@@ -194,14 +209,16 @@ public class ScrollableCounter: UIView {
     
     /**
      Scrolls to the item at the given index using the direction that requires the least amount views to be scrolled through.
+     If the animated flag is set to `true` then `self.scrollDuration` is ignored and a value of 0 is used for the scroll animation.
      
      - note:
      This will stop any animation that is currently playing.
      
      - parameters:
         - index: The index of the item to scroll to.
+        - animated: Whether or not the scrolling should be animated.  Defaults to `true`.
      */
-    public func scrollToItem(atIndex index: Int) {
+    public func scrollToItem(atIndex index: Int, animated: Bool = true) {
         stop()
         resetCurrentIndexToClosest()
         var direction: ScrollDirection
@@ -232,7 +249,7 @@ public class ScrollableCounter: UIView {
             }
         }
         
-        animateToItem(atIndex: index, direction: direction)
+        animateToItem(atIndex: index, direction: direction, animated: animated)
     }
     
     /**
@@ -291,23 +308,35 @@ public class ScrollableCounter: UIView {
      Resets `currentIndex` to the index of the item in `itemsBeingAnimated` that is the most visible.
      */
     func resetCurrentIndexToClosest() {
-        guard itemsBeingAnimated.count == 2 else {
+        guard itemsBeingAnimated.count >= 2 else {
+            if let onlyItem = itemsBeingAnimated.first {
+                currentIndex = onlyItem.tag
+            }
             return
         }
-        let item0 = itemsBeingAnimated[0]
-        let item1 = itemsBeingAnimated[1]
         
-        if abs(item0.top) < abs(item0.top) {
-            currentIndex = item0.tag
-        } else {
-            currentIndex = item1.tag
+        var minDistance: CGFloat = CGFloat.greatestFiniteMagnitude
+        var minDistIndex: Int = 0
+        var minDistance2: CGFloat = CGFloat.greatestFiniteMagnitude
+        var minDistIndex2: Int = 0
+        for (index, item) in itemsBeingAnimated.enumerated() {
+            let distance = abs(item.top)
+            if distance < minDistance {
+                minDistance2 = minDistance
+                minDistIndex2 = minDistIndex
+                
+                minDistance = distance
+                minDistIndex = index
+            } else if distance < minDistance2 {
+                minDistance2 = distance
+                minDistIndex2 = index
+            }
         }
         
-        if currentIndex == item0.tag {
-            itemsBeingAnimated = [item0, item1]
-        } else {
-            itemsBeingAnimated = [item1, item0]
-        }
+        currentIndex = minDistIndex
+        let item0 = itemsBeingAnimated[minDistIndex]
+        let item1 = itemsBeingAnimated[minDistIndex2]
+        itemsBeingAnimated = [item0, item1]
     }
     
     /**
