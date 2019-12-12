@@ -18,8 +18,10 @@ public class NumberScrollCounter: UIView {
     /// The `DigitScrollCounter`s that are stacked horizontally to make up the displayed number.
     private var digitScrollers = [DigitScrollCounter]()
     
-    /// The animation duration used when fading-out a `DigitScrollCounter`.
-    public var fadeOutDuration: TimeInterval = 0.2
+    /// The animation duration used when fading-out a `DigitScrollCounter`.  This is calculated as half of `slideDuration`.
+    private var fadeOutDuration: TimeInterval {
+        return slideDuration / 2
+    }
     /// The animation duration used when a `DigitScrollCounter` is scrolling to a number.
     public var scrollDuration: TimeInterval
     /// The animation duration when the items in `digitScrollers` are slid to their new origins.

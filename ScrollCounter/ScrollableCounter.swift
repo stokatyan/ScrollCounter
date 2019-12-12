@@ -80,7 +80,7 @@ public class ScrollableCounter: UIView {
         }
         self.items = items
         super.init(frame: frame)
-        clipsToBounds = true
+        clipsToBounds = false//true
         
         addSubview(currentItem)
         currentItem.frame.origin = CGPoint.zero
@@ -275,7 +275,10 @@ public class ScrollableCounter: UIView {
         - direction : The direction to the baser the `currentIndex` off of.
      */
     private func resetCurrentIndex(direction: ScrollDirection) {
-        guard itemsBeingAnimated.count == 2 else {
+        guard itemsBeingAnimated.count >= 2 else {
+            if let onlyItem = itemsBeingAnimated.first {
+                currentIndex = onlyItem.tag
+            }
             return
         }
         let item0 = itemsBeingAnimated[0]
@@ -333,7 +336,7 @@ public class ScrollableCounter: UIView {
             }
         }
         
-        currentIndex = minDistIndex
+        currentIndex = itemsBeingAnimated[minDistIndex].tag
         let item0 = itemsBeingAnimated[minDistIndex]
         let item1 = itemsBeingAnimated[minDistIndex2]
         itemsBeingAnimated = [item0, item1]
