@@ -74,6 +74,8 @@ public class ScrollableCounter: UIView {
      - parameters:
         - items: An ordered list of the views that will be scrolled.
         - frame: The frame of the `ScrollableCounter`, and the frame of every item.
+        - gradientColor: The color to use for the vertical gradient.  If this is `nil`, then no gradient is applied.
+        - gradientStop: The stopping point for the gradient, where the bottom stopping point is (1 - gradientStop).  If gradientStop is not less than 0.5 than it is ignored.  If this is `nil`, then no gradient is applied.
      */
     init(items: [UIView], frame: CGRect = CGRect.zero, gradientColor: UIColor? = nil, gradientStop: Float? = nil) {
         assert(items.count > 0, "ScrollableCounter must be initialized with non empty array of items.")

@@ -100,6 +100,8 @@ public class NumberScrollCounter: UIView {
         - textColor: The text color to use for the digits, prefix, suffix, and seperator.
         - digitBackgroundColor: The background color to use for the digits.
         - animateInitialValue: Whether or not the initial value should be animated to. Defaults to `false`.
+        - gradientColor: The color to use for the vertical gradient.  If this is `nil`, then no gradient is applied.
+        - gradientStop: The stopping point for the gradient, where the bottom stopping point is (1 - gradientStop).  If gradientStop is not less than 0.5 than it is ignored.  If this is `nil`, then no gradient is applied.
      */
     public init(value: Float, scrollDuration: TimeInterval = 0.3, decimalPlaces: Int = 0, prefix: String? = nil, suffix: String? = nil, seperator: String = ".", seperatorSpacing: CGFloat = 5, font: UIFont = UIFont.boldSystemFont(ofSize: UIFont.labelFontSize), textColor: UIColor = .black, digitBackgroundColor: UIColor = .clear, animateInitialValue: Bool = false, gradientColor: UIColor? = nil, gradientStop: Float? = nil) {
 
@@ -117,7 +119,11 @@ public class NumberScrollCounter: UIView {
         
         self.scrollDuration = scrollDuration
         self.gradientColor = gradientColor
-        self.gradientStop = gradientStop
+        if let stoppingPoint = gradientStop, stoppingPoint < 0.5 {
+            self.gradientStop = gradientStop
+        } else {
+            self.gradientStop = nil
+        }
         
         super.init(frame: CGRect.zero)
         
