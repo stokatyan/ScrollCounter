@@ -17,8 +17,18 @@ public class DigitScrollCounter: ScrollableCounter {
      Initialize a `DigitScrollCounter` with the given parameters.
      - note:
      The value of `min` must be less than the value of `max`.
+     
+     - parameters:
+        - min: The minimum value on the digit scroller (it does not have to actually be a a single digit).
+        - max: The maximum value on the digit scroller (it does not have to actually be a a single digit).
+        - font: The font of all of the labels that will make up the digits.
+        - textColor: The textColor of all of the labels that will make up the digits.
+        - backgroundColor: The backgroundColor of all of the labels that will make up the digits.
+        - scrollDuration:The total time interval for the animations when scrolling between any two digits.
+        - gradientColor: The color of the vertical gradient applied to the scroll counter.  If this is `nil`, then no gradient is applied.
+        - gradientStop: The stopping point for the gradient, where the bottom stopping point is (1 - gradientStop).  If this is `nil`, then no gradient is applied.
      */
-    public init(min: Int = 0, max: Int = 9, font: UIFont, textColor: UIColor, backgroundColor: UIColor, scrollDuration: TimeInterval) {
+    public init(min: Int = 0, max: Int = 9, font: UIFont, textColor: UIColor, backgroundColor: UIColor, scrollDuration: TimeInterval, gradientColor: UIColor? = nil, gradientStop: Float? = nil) {
         assert(min < max, "The min value must be less than the max value.")
         var labels = [UILabel]()
         
@@ -59,7 +69,7 @@ public class DigitScrollCounter: ScrollableCounter {
             items.append(view)
         }
         
-        super.init(items: items, frame: biggestFrame)
+        super.init(items: items, frame: biggestFrame, gradientColor: gradientColor, gradientStop: gradientStop)
         self.scrollDuration = scrollDuration
     }
     

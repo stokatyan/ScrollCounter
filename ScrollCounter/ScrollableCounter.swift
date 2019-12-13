@@ -51,6 +51,8 @@ public class ScrollableCounter: UIView {
     /// The animation curve for a scroll animation.
     var animationCurve: AnimationCurve = .easeInOut
     
+    var gradientView: UIView?
+    
     /// The animation duration to use when no animation is desired.
     static let noAnimationDuration: TimeInterval = 0.01
     
@@ -72,21 +74,36 @@ public class ScrollableCounter: UIView {
      - parameters:
         - items: An ordered list of the views that will be scrolled.
         - frame: The frame of the `ScrollableCounter`, and the frame of every item.
+        - gradientColor: The color to use for the vertical gradient.  If this is `nil`, then no gradient is applied.
+        - gradientStop: The stopping point for the gradient, where the bottom stopping point is (1 - gradientStop).  If gradientStop is not less than 0.5 than it is ignored.  If this is `nil`, then no gradient is applied.
      */
-    init(items: [UIView], frame: CGRect = CGRect.zero) {
+    init(items: [UIView], frame: CGRect = CGRect.zero, gradientColor: UIColor? = nil, gradientStop: Float? = nil) {
         assert(items.count > 0, "ScrollableCounter must be initialized with non empty array of items.")
         for item in items {
             assert(item.frame.equalTo(frame), "The frame of each item should equal the frame of the ScrollableCounter")
         }
         self.items = items
         super.init(frame: frame)
-        clipsToBounds = false//true
+        clipsToBounds = true
         
         addSubview(currentItem)
         currentItem.frame.origin = CGPoint.zero
         
         for (tag, item) in items.enumerated() {
             item.tag = tag
+        }
+        
+        if let gradientColor = gradientColor, let gradientStop = gradientStop {
+            let gradientLayer = CAGradientLayer()
+            gradientLayer.frame = frame
+            gradientLayer.colors = [gradientColor.cgColor, UIColor.clear.cgColor, UIColor.clear.cgColor, gradientColor.cgColor]
+            gradientLayer.locations = [0, NSNumber(value: gradientStop), NSNumber(value: 1.0 - gradientStop), 1]
+            let view = UIView(frame: frame)
+            view.backgroundColor = .clear
+            view.layer.addSublayer(gradientLayer)
+            addSubview(view)
+            bringSubviewToFront(view)
+            gradientView = view
         }
     }
     
@@ -203,53 +220,56 @@ public class ScrollableCounter: UIView {
                 itemIndex = items.count - 1
             }
         }
+        
+        if let gradientView = gradientView {
+            bringSubviewToFront(gradientView)
+        }
     }
     
     // MARK: Control
     
     /**
-     Scrolls to the item at the given index using the direction that requires the least amount views to be scrolled through.
-     If the animated flag is set to `true` then `self.scrollDuration` is ignored and a value of 0 is used for the scroll animation.
-     
-     - note:
-     This will stop any animation that is currently playing.
-     
+     Calculates the direction that should be scrolled fore the current state of the scrollable counter to animate to the given index.
      - parameters:
-        - index: The index of the item to scroll to.
-        - animated: Whether or not the scrolling should be animated.  Defaults to `true`.
+        - index: The index that the scrollable counter should scroll to.
      */
-    public func scrollToItem(atIndex index: Int, animated: Bool = true) {
-        stop()
-        resetCurrentIndexToClosest()
+    private func calculateDirection(toIndex index: Int) -> ScrollDirection {
         var direction: ScrollDirection
-        
         var downDistance: Int
         var upDistance: Int
         
-        if index > currentIndex {
-            downDistance = index - currentIndex
-        } else {
-            downDistance = items.count - abs(currentIndex - index)
-        }
-        
-        if index < currentIndex {
-            upDistance = currentIndex - index
-        } else {
-            upDistance = items.count - abs(currentIndex - index)
-        }
-        
-        if downDistance < upDistance {
-            direction = .down
-        } else if upDistance < downDistance {
-            direction = .up
-        } else {
-            direction = .down
-            if index < currentIndex {
+        if currentIndex == index {
+            if currentItem.top > 0 {
                 direction = .up
+            } else {
+                direction = .down
+            }
+        } else {
+            if index > currentIndex {
+                downDistance = index - currentIndex
+            } else {
+                downDistance = items.count - abs(currentIndex - index)
+            }
+            
+            if index < currentIndex {
+                upDistance = currentIndex - index
+            } else {
+                upDistance = items.count - abs(currentIndex - index)
+            }
+            
+            if downDistance < upDistance {
+                direction = .down
+            } else if upDistance < downDistance {
+                direction = .up
+            } else {
+                direction = .down
+                if index < currentIndex {
+                    direction = .up
+                }
             }
         }
         
-        animateToItem(atIndex: index, direction: direction, animated: animated)
+        return direction
     }
     
     /**
@@ -340,6 +360,25 @@ public class ScrollableCounter: UIView {
         let item0 = itemsBeingAnimated[minDistIndex]
         let item1 = itemsBeingAnimated[minDistIndex2]
         itemsBeingAnimated = [item0, item1]
+    }
+    
+    /**
+     Scrolls to the item at the given index using the direction that requires the least amount views to be scrolled through.
+     If the animated flag is set to `true` then `self.scrollDuration` is ignored and a value of 0 is used for the scroll animation.
+     
+     - note:
+     This will stop any animation that is currently playing.
+     
+     - parameters:
+        - index: The index of the item to scroll to.
+        - animated: Whether or not the scrolling should be animated.  Defaults to `true`.
+     */
+    public func scrollToItem(atIndex index: Int, animated: Bool = true) {
+        stop()
+        resetCurrentIndexToClosest()
+        let direction = calculateDirection(toIndex: index)
+    
+        animateToItem(atIndex: index, direction: direction, animated: animated)
     }
     
     /**
