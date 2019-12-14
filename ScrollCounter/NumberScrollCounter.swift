@@ -35,18 +35,17 @@ public class NumberScrollCounter: UIView {
     /// The number of decimal places that should be displayed.
     public var decimalPlaces: Int
     /// The font to use for all of the labels used in building the `NumberScrollCounter`.
-    let font: UIFont
+    public let font: UIFont
     /// The text color to use for all of the labels used in building the `NumberScrollCounter`.
-    let textColor: UIColor
-    /// Thebackground color to use for all of the labels used in `digitScrollers`.
-    let digitBackgroundColor: UIColor
+    public let textColor: UIColor
+    private let digitScrollerBackgroundColor: UIColor = .clear
     
     /// The string to use as a prefix to the items in `digitScrollers`.
     public var prefix: String?
     /// The string to use as a suffix to the items in `digitScrollers`.
     public var suffix: String?
     /// The string to use as the decimal indicator for the items in `digitScrollers`.
-    var seperator: String
+    let seperator: String
     /// The string that will be used to represent negative values.
     let negativeSign = "-"
     
@@ -85,6 +84,8 @@ public class NumberScrollCounter: UIView {
     /**
      Initialize a `NumberScrollCounter` with the given parameters.
      
+     After the view is initializes, it's digit scrollers will be set to the given values, and the frame will be resized using `sizeToFit()`.
+     
      - note:
      To get a design similar to Robinhood, try using `"Avenir-Black"` as the font.
      
@@ -98,19 +99,17 @@ public class NumberScrollCounter: UIView {
         - seperatorSpacing: The spacing to use between the seperator and the adjacent digits.  Defaults to `5`.
         - font: The font to use for the digits, prefix, suffix, and seperator.
         - textColor: The text color to use for the digits, prefix, suffix, and seperator.
-        - digitBackgroundColor: The background color to use for the digits.
         - animateInitialValue: Whether or not the initial value should be animated to. Defaults to `false`.
         - gradientColor: The color to use for the vertical gradient.  If this is `nil`, then no gradient is applied.
         - gradientStop: The stopping point for the gradient, where the bottom stopping point is (1 - gradientStop).  If gradientStop is not less than 0.5 than it is ignored.  If this is `nil`, then no gradient is applied.
      */
-    public init(value: Float, scrollDuration: TimeInterval = 0.3, decimalPlaces: Int = 0, prefix: String? = nil, suffix: String? = nil, seperator: String = ".", seperatorSpacing: CGFloat = 5, font: UIFont = UIFont.boldSystemFont(ofSize: UIFont.labelFontSize), textColor: UIColor = .black, digitBackgroundColor: UIColor = .clear, animateInitialValue: Bool = false, gradientColor: UIColor? = nil, gradientStop: Float? = nil) {
+    public init(value: Float, scrollDuration: TimeInterval = 0.3, decimalPlaces: Int = 0, prefix: String? = nil, suffix: String? = nil, seperator: String = ".", seperatorSpacing: CGFloat = 0, font: UIFont = UIFont.boldSystemFont(ofSize: UIFont.labelFontSize), textColor: UIColor = .black, animateInitialValue: Bool = false, gradientColor: UIColor? = nil, gradientStop: Float? = nil) {
 
         self.currentValue = value
         
         self.decimalPlaces = decimalPlaces
         self.font = font
         self.textColor = textColor
-        self.digitBackgroundColor = digitBackgroundColor
         
         self.prefix = prefix
         self.suffix = suffix
@@ -131,10 +130,24 @@ public class NumberScrollCounter: UIView {
         
         setValue(value, animated: animateInitialValue)
         frame.size.height = digitScrollers.first!.height
+        
+        sizeToFit()
     }
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+    
+    public override func sizeToFit() {
+        var width: CGFloat = 0
+        
+        if let suffixView = suffixView {
+            width = suffixView.frame.origin.x + suffixView.frame.width
+        } else if let lastDigit = digitScrollers.last {
+            width = lastDigit.frame.origin.x + lastDigit.frame.width
+        }
+        
+        self.frame.size.width = width
     }
     
     // MARK: - Control
@@ -229,6 +242,7 @@ public class NumberScrollCounter: UIView {
         updatePrefix()
         createSeperatorViewIfNeeded()
         updateDigitScrollersLayout()
+        updateSuffix()
         
         animator!.addCompletion({ _ in
             self.animator = nil
@@ -249,6 +263,8 @@ public class NumberScrollCounter: UIView {
         seperatorLabel.textColor = textColor
         seperatorLabel.font = font
         seperatorLabel.sizeToFit()
+        seperatorLabel.frame.size.width += 2 * seperatorSpacing
+        seperatorLabel.textAlignment = .center
         seperatorLabel.frame.origin = CGPoint.zero
         addSubview(seperatorLabel)
         
@@ -275,8 +291,8 @@ public class NumberScrollCounter: UIView {
             }
             
             var x = startingX + CGFloat(index) * scroller.width
-            if index >= seperatorLocation {
-                x += 2 * seperatorSpacing
+            if index >= seperatorLocation, let seperatorView = seperatorView {
+                x += seperatorView.frame.width
             }
             animator.addAnimations {
                 scroller.alpha = 1
@@ -286,7 +302,7 @@ public class NumberScrollCounter: UIView {
             if index == seperatorLocation, let seperatorView = seperatorView {
                 animator.addAnimations {
                     seperatorView.alpha = 1
-                    seperatorView.frame.origin.x = (startingX + CGFloat(index) * scroller.width) - scroller.width/4 + self.seperatorSpacing
+                    seperatorView.frame.origin.x = (startingX + CGFloat(index) * scroller.width)
                 }
             }
         }
@@ -371,6 +387,47 @@ public class NumberScrollCounter: UIView {
     }
     
     /**
+    Updates the location of the suffix (if there is one), and then animates any changes accordingly.
+    */
+    func updateSuffix() {
+        guard let animator = self.animator else {
+            return
+        }
+        
+        if suffixView == nil, let suffix = suffix {
+            let suffixLabel = UILabel()
+            suffixLabel.text = suffix
+            suffixLabel.textColor = textColor
+            suffixLabel.font = font
+            suffixLabel.sizeToFit()
+            suffixLabel.frame.origin = CGPoint.zero
+            addSubview(suffixLabel)
+
+            suffixLabel.alpha = 0
+            suffixView = suffixLabel
+        }
+
+        if let suffixView = self.suffixView, let scroller = digitScrollers.first {
+            var suffixX: CGFloat = 0
+            suffixX += scroller.frame.width * CGFloat(digitScrollers.count)
+            if let view = seperatorView {
+                suffixX += view.frame.width
+            }
+            if let view = prefixView {
+                suffixX += view.frame.width
+            }
+            if let view = negativeSignView, currentValue < 0 {
+                suffixX += view.frame.width
+            }
+            
+            animator.addAnimations {
+                suffixView.frame.origin.x = suffixX
+                suffixView.alpha = 1
+            }
+        }
+    }
+    
+    /**
      Updates the number of items in `digitScrollers` by adding the given number of additional scrollers.
      
      Items are added by inserting them to the beggining of `digitScrollers`.
@@ -382,7 +439,7 @@ public class NumberScrollCounter: UIView {
     private func updateScrollers(add count: Int) {
         var newScrollers = [DigitScrollCounter]()
         for _ in 0..<count {
-            let digitScrollCounter = DigitScrollCounter(font: font, textColor: textColor, backgroundColor: digitBackgroundColor, scrollDuration: scrollDuration, gradientColor: gradientColor, gradientStop: gradientStop)
+            let digitScrollCounter = DigitScrollCounter(font: font, textColor: textColor, backgroundColor: digitScrollerBackgroundColor, scrollDuration: scrollDuration, gradientColor: gradientColor, gradientStop: gradientStop)
             newScrollers.append(digitScrollCounter)
         }
         digitScrollers.insert(contentsOf: newScrollers, at: 0)
