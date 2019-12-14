@@ -11,7 +11,7 @@ it, simply add the following line to your Podfile:
 pod 'ScrollCounter'
 ```
 
-## Overview
+## Usage
 ScrollCounter is a framework for getting a nice scrolling animation when transitioning between numbers.  This framework is modeled after the animations seen in the Robinhood app.
 
 Checkout [this Medium article](https://medium.com/@tokat.shant/scrollcounter-an-ios-solution-to-the-robinhood-number-animation-bbcbd8c90355) for a high-level look on how ScrollCounter works.
