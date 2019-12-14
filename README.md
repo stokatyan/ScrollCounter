@@ -14,6 +14,8 @@ pod 'ScrollCounter'
 ## Overview
 ScrollCounter is a framework for getting a nice scrolling animation when transitioning between numbers.  This framework is modeled after the animations seen in the Robinhood app.
 
+Checkout [this Medium article](https://medium.com/@tokat.shant/scrollcounter-an-ios-solution-to-the-robinhood-number-animation-bbcbd8c90355) for a high-level look on how ScrollCounter works.
+
 ### Single Digits
 <img src="https://github.com/stokatyan/ReadMeMedia/blob/master/ScrollCounter/DigitScrollGif.gif" width="97" height="157" />
 A scroll counter with a single digit can be created and animated in 2 lines:
