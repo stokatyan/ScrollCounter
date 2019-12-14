@@ -32,7 +32,7 @@ Use a `NumberScrollCounter` to handle an unbounded range of numbers:
 
 ```swift
 // Initialize a number counter, which is a view composed of `DigitScrollCounter`s.
-numberCounter = NumberScrollCounter(value: 1, scrollDuration: 0.33, decimalPlaces: 2, prefix: "$", suffix: "", font: font.withSize(40), textColor: .white, gradientColor: .black, gradientStop: 0.2)
+let numberCounter = NumberScrollCounter(value: 1, scrollDuration: 0.33, decimalPlaces: 2, prefix: "$", suffix: "", font: font.withSize(40), textColor: .white, gradientColor: .black, gradientStop: 0.2)
 
 // Set a new value.  This will trigger the animation to show the given value.
 numberCounter.setValue(123.45)
