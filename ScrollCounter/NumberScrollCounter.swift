@@ -162,7 +162,7 @@ public class NumberScrollCounter: UIView {
         currentValue = value
         
         var digitString = getStringArray(fromValue: currentValue)
-        if decimalPlaces == 0 {
+        if decimalPlaces == 0, digitString.contains(seperator) {
             while let lastElement = digitString.popLast(), lastElement != seperator {
                 continue
             }
@@ -189,10 +189,6 @@ public class NumberScrollCounter: UIView {
     
     /**
      Converts the given float to an array of strings.
-    
-     The given value will have each individual digit (ignoring any decimal seperator) mapped to an element in an array.
-     
-     ``` getStringArray(246.89) = ["2", "4", "6", "8", "9"] ```
      
      - parameters:
         - value: The value to convert to an array of strings.
@@ -200,7 +196,7 @@ public class NumberScrollCounter: UIView {
      */
     private func getStringArray(fromValue value: Float) -> [String] {
         return String(format: "%.\(decimalPlaces)f", value).compactMap { character -> String in
-            var entry = seperator
+            var entry = String(character)
             let result = character.wholeNumberValue
             if let resultNumber = result {
                 entry = "\(resultNumber)"
