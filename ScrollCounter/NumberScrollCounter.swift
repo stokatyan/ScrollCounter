@@ -34,6 +34,8 @@ public class NumberScrollCounter: UIView {
     public var seperatorSpacing: CGFloat
     /// The number of decimal places that should be displayed.
     public var decimalPlaces: Int
+    /// The number of digits which should be grouped together. `nil` if there is no grouping.
+    public var groupSize: Int?
     /// The font to use for all of the labels used in building the `NumberScrollCounter`.
     public let font: UIFont
     /// The text color to use for all of the labels used in building the `NumberScrollCounter`.
@@ -48,6 +50,8 @@ public class NumberScrollCounter: UIView {
     let seperator: String
     /// The string that will be used to represent negative values.
     let negativeSign = "-"
+    /// The size of this string will be used to seperate groups.
+    let groupSeparator = " "
     
     /// The view that holds the prefix, or `nil` if there is no prefix.
     private var prefixView: UIView?
@@ -93,6 +97,7 @@ public class NumberScrollCounter: UIView {
         - value: The initial value to display.
         - scrollDuration: The duration that is used when animating a single digit's scrolling animation.  Defaults to `0.3`.
         - decimalPlaces: The number of decimals to display.  Defaults to `0`.
+        - groupSize: The number of digits which should be grouped together. Defaults to `nil` which results in no grouping.
         - prefix: The prefix to use in front of the displayed number.  Defaults to `nil`, which results in no prefix.
         - suffix: The suffix to use at the end of the displayed number.  Defaults to `nil`, which results in no suffix.
         - seperator: The seperator to use to represent a decimal.  Defaults to `"."`.
@@ -103,11 +108,12 @@ public class NumberScrollCounter: UIView {
         - gradientColor: The color to use for the vertical gradient.  If this is `nil`, then no gradient is applied.
         - gradientStop: The stopping point for the gradient, where the bottom stopping point is (1 - gradientStop).  If gradientStop is not less than 0.5 than it is ignored.  If this is `nil`, then no gradient is applied.
      */
-    public init(value: Float, scrollDuration: TimeInterval = 0.3, decimalPlaces: Int = 0, prefix: String? = nil, suffix: String? = nil, seperator: String = ".", seperatorSpacing: CGFloat = 0, font: UIFont = UIFont.boldSystemFont(ofSize: UIFont.labelFontSize), textColor: UIColor = .black, animateInitialValue: Bool = false, gradientColor: UIColor? = nil, gradientStop: Float? = nil) {
+    public init(value: Float, scrollDuration: TimeInterval = 0.3, decimalPlaces: Int = 0, groupSize: Int? = nil, prefix: String? = nil, suffix: String? = nil, seperator: String = ".", seperatorSpacing: CGFloat = 0, font: UIFont = UIFont.boldSystemFont(ofSize: UIFont.labelFontSize), textColor: UIColor = .black, animateInitialValue: Bool = false, gradientColor: UIColor? = nil, gradientStop: Float? = nil) {
 
         self.currentValue = value
         
         self.decimalPlaces = decimalPlaces
+        self.groupSize = groupSize
         self.font = font
         self.textColor = textColor
         
@@ -278,6 +284,20 @@ public class NumberScrollCounter: UIView {
         
         let startingX = startingXCoordinate
         let seperatorLocation = digitScrollers.count - decimalPlaces
+
+        var grouping = [CGFloat](repeating: 0, count: digitScrollers.count)
+        if let groupSize = groupSize {
+            let spaceWidth = NSAttributedString(string: groupSeparator, attributes: [.font: font]).size().width
+            let maxPadding = CGFloat(Int((seperatorLocation - 1) / groupSize)) * spaceWidth
+
+            for (offset, element) in stride(from: seperatorLocation - 1, through: 0, by: -1).enumerated() {
+                grouping[offset] = (CGFloat(Int((element) / groupSize))) * spaceWidth
+            }
+
+            for index in 0..<grouping.count {
+                grouping[index] = abs(grouping[index] - maxPadding)
+            }
+        }
         
         for (index, scroller) in digitScrollers.enumerated() {
             if scroller.superview == nil {
@@ -287,6 +307,11 @@ public class NumberScrollCounter: UIView {
             }
             
             var x = startingX + CGFloat(index) * scroller.width
+
+            if index < grouping.count {
+                x += grouping[index]
+            }
+
             if index >= seperatorLocation, let seperatorView = seperatorView {
                 x += seperatorView.frame.width
             }
@@ -298,7 +323,7 @@ public class NumberScrollCounter: UIView {
             if index == seperatorLocation, let seperatorView = seperatorView {
                 animator.addAnimations {
                     seperatorView.alpha = 1
-                    seperatorView.frame.origin.x = (startingX + CGFloat(index) * scroller.width)
+                    seperatorView.frame.origin.x = (startingX + CGFloat(index) * scroller.width) + grouping[index]
                 }
             }
         }
@@ -406,6 +431,11 @@ public class NumberScrollCounter: UIView {
         if let suffixView = self.suffixView, let scroller = digitScrollers.first {
             var suffixX: CGFloat = 0
             suffixX += scroller.frame.width * CGFloat(digitScrollers.count)
+            if let groupSize = groupSize {
+                let spaceWidth = NSAttributedString(string: groupSeparator, attributes: [.font: font]).size().width
+                let maxPadding = CGFloat(Int((digitScrollers.count - decimalPlaces - 1) / groupSize)) * spaceWidth
+                suffixX += maxPadding
+            }
             if let view = seperatorView {
                 suffixX += view.frame.width
             }
