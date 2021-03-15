@@ -78,6 +78,13 @@ public class NumberScrollCounter: UIView {
         }
         return startingX
     }
+
+    public override var intrinsicContentSize: CGSize {
+        .init(
+            width: suffixView?.frame.maxX ?? digitScrollers.last?.frame.maxX ?? frame.width,
+            height: digitScrollers.first?.frame.height ?? frame.height
+        )
+    }
     
     // MARK: - Init
     
@@ -125,8 +132,6 @@ public class NumberScrollCounter: UIView {
         }
         
         super.init(frame: CGRect.zero)
-        
-        self.clipsToBounds = false
         
         setValue(value, animated: animateInitialValue)
         frame.size.height = digitScrollers.first!.height
@@ -243,6 +248,11 @@ public class NumberScrollCounter: UIView {
         animator!.addCompletion({ _ in
             self.animator = nil
         })
+
+        invalidateIntrinsicContentSize()
+        animator?.addAnimations { [weak self] in
+            self?.superview?.layoutIfNeeded()
+        }
         animator!.startAnimation()
     }
     
